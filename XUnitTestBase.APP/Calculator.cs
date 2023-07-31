@@ -8,14 +8,21 @@ namespace XUnitTestBase.APP
 {
     public class Calculator
     {
+        private ICalculatorService _calculatorService { get; set; }
+
+        public Calculator(ICalculatorService calculatorService)
+        {
+            _calculatorService = calculatorService;
+        }
+
         public int Add(int a, int b)
         {
-            if (a + b < 0)
-            {
-                return 0;
-            }
+            return _calculatorService.Add(a, b);
+        }
 
-            return a + b;
+        public int Mul(int a, int b)
+        {
+            return _calculatorService.Mul(a, b);
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Moq;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,10 +11,15 @@ namespace XUnitTestBase.Test
 {
     public class CalculatorTest
     {
-        public Calculator Calculator { get; set; }
+        public CalculatorService Calculator { get; set; }
+        public Calculator DICalculator { get; set; }
+        public Mock<ICalculatorService> Mock { get; set; }
         public CalculatorTest()
         {
-            Calculator = new Calculator();
+            Calculator = new CalculatorService();
+
+            Mock = new Mock<ICalculatorService>();
+            DICalculator = new Calculator(Mock.Object);
         }
 
         [Fact]
@@ -231,9 +237,8 @@ namespace XUnitTestBase.Test
         [Theory]
         [InlineData(5, 20, 25)]
         [InlineData(5, 12, 17)]
-        public void Add_SimpleValues_ReturnTotal(int a, int b, int expectedTotal)
+        public void Add_SimpleValues_ReturnTotalValue(int a, int b, int expectedTotal)
         {
-
             // Act
             var actualTotal = Calculator.Add(a, b);
 
@@ -252,6 +257,85 @@ namespace XUnitTestBase.Test
 
             // Assert
             Assert.Equal<int>(expectedTotal, actualTotal);
+        }
+
+        [Theory]
+        [InlineData(5, 20, 25)]
+        [InlineData(5, 12, 17)]
+        public void Add_SimpleValues_ReturnTotalValueMock(int a, int b, int expectedTotal)
+        {
+            // taklit etme olayı burada gerçekleşir
+            Mock.Setup(x => x.Add(a, b)).Returns(expectedTotal);
+
+            // Act
+            var actualTotal = DICalculator.Add(a, b);
+
+            // Assert
+            Assert.Equal<int>(expectedTotal, actualTotal);
+        }
+
+        [Theory]
+        [InlineData(3, 4, 12)]
+        [InlineData(5, 0, 0)]
+        public void Multiply_SimpleValues_ReturnTotalValueMock(int a, int b, int expectedTotal)
+        {
+            // taklit etme olayı burada gerçekleşir
+            Mock.Setup(x => x.Mul(a, b)).Returns(expectedTotal);
+
+            // Act
+            var actualTotal = DICalculator.Mul(a, b);
+
+            // Assert
+            Assert.Equal<int>(expectedTotal, actualTotal);
+        }
+
+        [Theory]
+        [InlineData(5, 20, 25)]
+        [InlineData(5, 12, 17)]
+        public void Add_SimpleValuesMockOneTime_ReturnTotalValue(int a, int b, int expectedTotal)
+        {
+            // taklit etme olayı burada gerçekleşir
+            Mock.Setup(x => x.Add(a, b)).Returns(expectedTotal);
+
+            // Act
+            var actualTotal = DICalculator.Add(a, b);
+
+            // Assert
+            Assert.Equal<int>(expectedTotal, actualTotal);
+
+            // Test'in sadece bir kere çalışıp çalışmadığını kontrol eder.
+            Mock.Verify(x => x.Add(a, b), Times.Once);
+        }
+
+        [Theory]
+        [InlineData(0, 5)]
+        public void Multiply_ZeroValue_ReturnsException(int a, int b)
+        {
+            // Exception için sahte test yazdık
+            Mock.Setup(x => x.Mul(a, b)).Throws(new Exception("a = 0 olamaz!"));
+
+            // Döneceği tür Exception ise bu kısım başarılı olur ve aynı zamanda değişkene eşitleriz
+            Exception exception = Assert.Throws<Exception>(() => DICalculator.Mul(a, b));
+
+            // Hata mesajları birbirine aynıysa testin bu kısmı başarılı olur.
+            Assert.Equal("a = 0 olamaz!", exception.Message);
+        }
+
+        [Theory]
+        [InlineData(3, 5, 15)]
+        public void xxxxx(int a, int b, int expectedValue)
+        {
+            int actualMultiply = 0;
+            Mock.Setup(x => x.Mul(It.IsAny<int>(), It.IsAny<int>()))
+                .Callback<int, int>((x, y) => actualMultiply = x * y);
+
+            DICalculator.Mul(a, b);
+
+            Assert.Equal(expectedValue, actualMultiply);
+
+            DICalculator.Mul(5, 20);
+
+            Assert.Equal(100, actualMultiply);
         }
     }
 }
